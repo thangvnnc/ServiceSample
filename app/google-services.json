@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "114233365954",
+    "firebase_url": "https://united-planet-144708.firebaseio.com",
+    "project_id": "united-planet-144708",
+    "storage_bucket": "united-planet-144708.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:114233365954:android:afedbef599c38788f5725b",
+        "android_client_info": {
+          "package_name": "com.thangvnnc.stringee"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "114233365954-frd4i6ia97lhj2bp49bvm056cfo5ovaj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.thangvnnc.stringee",
+            "certificate_hash": "45a89200c4c675362288a12958c2f1409927efd2"
+          }
+        },
+        {
+          "client_id": "114233365954-6l9blmo5lppeiiimo5hvo5s7e0j8n7mb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3Wol2_Aqi1nzsbckzDXi9llGO5kSARwY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "114233365954-6l9blmo5lppeiiimo5hvo5s7e0j8n7mb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
