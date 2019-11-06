@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
@@ -30,23 +31,56 @@
         </activity>
         <activity android:name=".stringee.activity.IncomingCallActivity">
         </activity>
+<!--        <service-->
+<!--            android:name=".stringee.notify.PushNotifyServiceIdStringee"-->
+<!--            android:exported="false">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>-->
+<!--            </intent-filter>-->
+<!--        </service>-->
+<!--        <service-->
+<!--            android:name=".stringee.notify.PushNotifyMesssageStringee">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="com.google.firebase.MESSAGING_EVENT"/>-->
+<!--            </intent-filter>-->
+<!--        </service>-->
+
         <service
-            android:name=".stringee.notify.PushNotifyServiceIdStringee">
+            android:name=".stringee.notify.PushNotifyMesssageStringee"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".stringee.notify.PushNotifyServiceIdStringee"
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
             </intent-filter>
         </service>
+
         <service android:name=".ServiceSample" android:enabled="true"/>
         <service android:name=".stringee.service.StringeeService"
             android:enabled="true"
             android:exported="true"
             android:label="StringeeService"/>
-        <receiver android:name=".stringee.service.TransferServiceReceiver" android:exported="true">
+        <receiver android:name=".stringee.receive.TransferServiceReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="service.Broadcast"/>
             </intent-filter>
             <intent-filter>
                 <action android:name="main.Broadcast"/>
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".stringee.receive.RestartServiceReceiver">
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+                <action android:name="android.intent.action.USER_PRESENT"/>
+                <action android:name="android.intent.action.REBOOT"/>
             </intent-filter>
         </receiver>
 

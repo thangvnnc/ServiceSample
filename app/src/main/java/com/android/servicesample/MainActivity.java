@@ -12,8 +12,9 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.servicesample.stringee.activity.OutgoingCallActivity;
+import com.android.servicesample.stringee.log.LogStringee;
 import com.android.servicesample.stringee.service.StringeeService;
-import com.android.servicesample.stringee.service.TransferServiceReceiver;
+import com.android.servicesample.stringee.receive.TransferServiceReceiver;
 import com.stringee.StringeeClient;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
@@ -23,7 +24,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TransferServiceReceiver mainReceiver = new TransferServiceReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.e(TAG, "received");
+            LogStringee.error(TAG, "received");
             Toast.makeText(getBaseContext(), "A", Toast.LENGTH_SHORT).show();
         }
     };

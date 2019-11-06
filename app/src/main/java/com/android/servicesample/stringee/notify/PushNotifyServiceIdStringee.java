@@ -1,7 +1,6 @@
 package com.android.servicesample.stringee.notify;
 
-import android.util.Log;
-
+import com.android.servicesample.stringee.log.LogStringee;
 import com.android.servicesample.stringee.service.StringeeService;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.FirebaseInstanceIdService;
@@ -27,13 +26,13 @@ public class PushNotifyServiceIdStringee extends FirebaseInstanceIdService {
             client.registerPushToken(refreshedToken, new StatusListener() {
                 @Override
                 public void onSuccess() {
-                    Log.e(TAG, "onTokenRefresh success");
+                    LogStringee.error(TAG, "onTokenRefresh success");
                 }
 
                 @Override
                 public void onError(StringeeError stringeeError) {
                     super.onError(stringeeError);
-                    Log.e(TAG, "onTokenRefresh error: " + stringeeError.getMessage());
+                    LogStringee.error(TAG, "onTokenRefresh error: " + stringeeError.getMessage());
                 }
             });
         } else {

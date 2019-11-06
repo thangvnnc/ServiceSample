@@ -1,4 +1,4 @@
-package com.android.servicesample.stringee.service;
+package com.android.servicesample.stringee.receive;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

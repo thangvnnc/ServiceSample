@@ -5,7 +5,6 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -17,6 +16,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.android.servicesample.R;
+import com.android.servicesample.stringee.log.LogStringee;
 import com.android.servicesample.stringee.service.StringeeService;
 import com.android.servicesample.stringee.utils.Utils;
 import com.stringee.StringeeClient;
@@ -170,7 +170,7 @@ public class OutgoingCallActivity extends AppCompatActivity implements View.OnCl
         mStringeeCall.setCallListener(new StringeeCall.StringeeCallListener() {
             @Override
             public void onSignalingStateChange(StringeeCall stringeeCall, final StringeeCall.SignalingState signalingState, String s, int i, String s1) {
-                Log.e("Stringee", "======== Custom data: " + stringeeCall.getCustomDataFromYourServer());
+                LogStringee.error("Stringee", "======== Custom data: " + stringeeCall.getCustomDataFromYourServer());
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {

@@ -2,14 +2,13 @@ package com.android.servicesample;
 
 import android.app.ActivityManager;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
-import android.util.Log;
 
-import com.android.servicesample.stringee.service.TransferServiceReceiver;
+import com.android.servicesample.stringee.log.LogStringee;
+import com.android.servicesample.stringee.receive.TransferServiceReceiver;
 
 public class ServiceSample extends Service {
     private static final String TAG = "ServiceSample";
@@ -48,10 +47,10 @@ public class ServiceSample extends Service {
     private TransferServiceReceiver serviceReceiver = new TransferServiceReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.e(TAG, "received");
+            LogStringee.error(TAG, "received");
             ServiceSample serviceSample = ServiceSample.getInstance();
             if (serviceSample.isNull()) {
-                Log.e(TAG, "ServiceSample is null");
+                LogStringee.error(TAG, "ServiceSample is null");
                 return;
             }
 
@@ -62,7 +61,7 @@ public class ServiceSample extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        Log.e(TAG, "onBind");
+        LogStringee.error(TAG, "onBind");
         return null;
     }
 
@@ -72,13 +71,13 @@ public class ServiceSample extends Service {
         intance = this;
         IntentFilter intentFilter = new IntentFilter("service.Broadcast");
         registerReceiver(serviceReceiver, intentFilter);
-        Log.e(TAG, "Service create");
+        LogStringee.error(TAG, "Service create");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        Log.e(TAG, "onStartCommand");
+        LogStringee.error(TAG, "onStartCommand");
         return START_STICKY;
     }
 
@@ -87,11 +86,11 @@ public class ServiceSample extends Service {
         super.onDestroy();
         intance = null;
         unregisterReceiver(serviceReceiver);
-        Log.e(TAG, "onDestroy");
+        LogStringee.error(TAG, "onDestroy");
     }
 
     public void process() {
-        Log.e(TAG, "processing...");
+        LogStringee.error(TAG, "processing...");
         Intent intent = new Intent();
         intent.setAction("main.Broadcast");
         sendBroadcast(intent);

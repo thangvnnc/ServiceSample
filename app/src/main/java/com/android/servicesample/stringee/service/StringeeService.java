@@ -1,20 +1,27 @@
 package com.android.servicesample.stringee.service;
 
 import android.app.ActivityManager;
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.util.Log;
-import android.widget.Toast;
 
+import androidx.core.app.NotificationCompat;
+
+import com.android.servicesample.MainActivity;
+import com.android.servicesample.R;
 import com.android.servicesample.stringee.activity.IncomingCallActivity;
 import com.android.servicesample.stringee.common.StringeeToken;
 import com.android.servicesample.stringee.define.StringeeKeys;
+import com.android.servicesample.stringee.receive.TransferServiceReceiver;
 import com.stringee.StringeeClient;
 import com.stringee.call.StringeeCall;
 import com.stringee.exception.StringeeError;
@@ -35,7 +42,12 @@ public class StringeeService extends Service implements StringeeConnectionListen
 
     public static void start(Context context) {
         Intent intent = new Intent(context, StringeeService.class);
-        context.startService(intent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
+        }
+        else {
+            context.startService(intent);
+        }
     }
 
     public static void stop() {
@@ -59,13 +71,13 @@ public class StringeeService extends Service implements StringeeConnectionListen
         return false;
     }
 
-    private TransferServiceReceiver serviceReceiver = new TransferServiceReceiver() {
+    private TransferServiceReceiver transferServiceReceiver = new TransferServiceReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.e(TAG, "received");
+            LogStringee.error(TAG, "received");
             StringeeService stringeeService = StringeeService.getInstance();
             if (stringeeService.isNull()) {
-                Log.e(TAG, "ServiceSample is null");
+                LogStringee.error(TAG, "ServiceSample is null");
                 return;
             }
 
@@ -81,17 +93,18 @@ public class StringeeService extends Service implements StringeeConnectionListen
     public StringeeClient stringeeClient = null;
     public Map<String, StringeeCall> callsMap = new HashMap<>();
 
+
     @Override
     public void onCreate() {
         super.onCreate();
         instance = this;
-        IntentFilter intentFilter = new IntentFilter("service.Broadcast");
-        registerReceiver(serviceReceiver, intentFilter);
+        IntentFilter intentFilterTransfer = new IntentFilter("service.Broadcast");
+        registerReceiver(transferServiceReceiver, intentFilterTransfer);
     }
 
     public void process() {
         startRing();
-        Log.e(TAG, "processing...");
+        LogStringee.error(TAG, "processing...");
 //        Intent intent = new Intent();
 //        intent.setAction("main.Broadcast");
 //        sendBroadcast(intent);
@@ -106,7 +119,7 @@ public class StringeeService extends Service implements StringeeConnectionListen
     public int onStartCommand(Intent intent, int flags, int startId) {
         initRingStone();
         initStringee();
-        Log.e(TAG, "onStartCommand");
+        LogStringee.error(TAG, "onStartCommand");
         String userId = loadUserId(this);
         if (userId != null && "".equals(userId) == false) {
             userTokenId = userId;
@@ -115,13 +128,25 @@ public class StringeeService extends Service implements StringeeConnectionListen
         if (userTokenId != null) {
             refreshToken();
         }
-        return START_STICKY;
+
+        String input = intent.getStringExtra("inpuExtra");
+        String chanelId = "1234";
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        Notification notification = new NotificationCompat.Builder(this, chanelId)
+                .setContentTitle("StringeeService")
+                .setContentText(input)
+                .setSmallIcon(R.drawable.ic_android_black_24dp)
+                .setContentIntent(pendingIntent)
+                .build();
+        startForeground(1, notification);
+        return START_NOT_STICKY;
     }
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
-        Log.e(TAG, "onTaskRemoved");
+        LogStringee.error(TAG, "onTaskRemoved");
     }
 
     @Override
@@ -135,25 +160,25 @@ public class StringeeService extends Service implements StringeeConnectionListen
             stringeeClient.disconnect();
             stringeeClient = null;
         }
-        unregisterReceiver(serviceReceiver);
-        Log.e(TAG, "onDestroy");
+        unregisterReceiver(transferServiceReceiver);
+        sendBroadcast(new Intent("RestartServiceReceiver"));
+        LogStringee.error(TAG, "onDestroy");
     }
 
     @Override
     public void onConnectionConnected(StringeeClient stringeeClient, boolean b) {
         saveUserId(this, stringeeClient.getUserId());
-        Log.e(TAG, "onConnectionConnected");
+        LogStringee.error(TAG, "onConnectionConnected");
     }
 
     @Override
     public void onConnectionDisconnected(StringeeClient stringeeClient, boolean b) {
-        Log.e(TAG, "onConnectionDisconnected");
-        rẹmoveUserId(this);
+        LogStringee.error(TAG, "onConnectionDisconnected");
     }
 
     @Override
     public void onIncomingCall(StringeeCall stringeeCall) {
-        Log.e(TAG, "onIncomingCall");
+        LogStringee.error(TAG, "onIncomingCall");
         callsMap.put(stringeeCall.getCallId(), stringeeCall);
         Intent intent = new Intent(this, IncomingCallActivity.class);
         intent.putExtra("call_id", stringeeCall.getCallId());
@@ -162,17 +187,18 @@ public class StringeeService extends Service implements StringeeConnectionListen
 
     @Override
     public void onConnectionError(StringeeClient stringeeClient, StringeeError stringeeError) {
-        Log.e(TAG, "stringeeError : " + stringeeError.getMessage());
+        LogStringee.error(TAG, "stringeeError : " + stringeeError.getMessage());
     }
 
     @Override
     public void onRequestNewToken(StringeeClient stringeeClient) {
-        Log.e(TAG, "onRequestNewToken");
+        LogStringee.error(TAG, "onRequestNewToken");
+        refreshToken();
     }
 
     @Override
     public void onCustomMessage(String s, JSONObject jsonObject) {
-        Log.e(TAG, "onCustomMessage");
+        LogStringee.error(TAG, "onCustomMessage");
     }
 
     private void initRingStone() {
@@ -194,8 +220,10 @@ public class StringeeService extends Service implements StringeeConnectionListen
     }
 
     private void refreshToken() {
-        String token = StringeeToken.create(userTokenId);
-        stringeeClient.connect(token);
+        if (userTokenId != null) {
+            String token = StringeeToken.create(userTokenId);
+            stringeeClient.connect(token);
+        }
     }
 
 
@@ -205,7 +233,10 @@ public class StringeeService extends Service implements StringeeConnectionListen
     }
 
     public void disconnect() {
-        stringeeClient.disconnect();
+        if (stringeeClient != null) {
+            StringeeService.getInstance().rẹmoveUserId(this);
+            stringeeClient.disconnect();
+        }
     }
 
 
