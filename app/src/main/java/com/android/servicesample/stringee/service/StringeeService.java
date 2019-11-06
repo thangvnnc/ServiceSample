@@ -21,6 +21,7 @@ import com.android.servicesample.R;
 import com.android.servicesample.stringee.activity.IncomingCallActivity;
 import com.android.servicesample.stringee.common.StringeeToken;
 import com.android.servicesample.stringee.define.StringeeKeys;
+import com.android.servicesample.stringee.log.LogStringee;
 import com.android.servicesample.stringee.receive.TransferServiceReceiver;
 import com.stringee.StringeeClient;
 import com.stringee.call.StringeeCall;
