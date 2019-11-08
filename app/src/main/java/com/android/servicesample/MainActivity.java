@@ -36,9 +36,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if (!StringeeService.isRunning(this)) {
-            StringeeService.start(this);
-        }
+
 
 //        if ("xiaomi".equalsIgnoreCase(android.os.Build.MANUFACTURER)) {
 //            Intent autostartIntent = new Intent();
@@ -76,8 +74,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.btn3:
-//                Intent intent = new Intent("service.Broadcast");
-//                sendBroadcast(intent);
                 StringeeClient client = StringeeService.getInstance().stringeeClient;
                 if (client.isConnected()) {
                     Intent intent = new Intent(MainActivity.this, OutgoingCallActivity.class);

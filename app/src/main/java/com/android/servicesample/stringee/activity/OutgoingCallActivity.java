@@ -2,6 +2,7 @@ package com.android.servicesample.stringee.activity;
 
 import android.Manifest;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,9 +17,10 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.android.servicesample.R;
+import com.android.servicesample.stringee.define.StringeeSound;
+import com.android.servicesample.stringee.define.TransferKeys;
 import com.android.servicesample.stringee.log.LogStringee;
 import com.android.servicesample.stringee.service.StringeeService;
-import com.android.servicesample.stringee.utils.Utils;
 import com.stringee.StringeeClient;
 import com.stringee.call.StringeeCall;
 
@@ -175,20 +177,35 @@ public class OutgoingCallActivity extends AppCompatActivity implements View.OnCl
                     @Override
                     public void run() {
                         mSignalingState = signalingState;
+                        Intent soundReceive = new Intent("service.Broadcast");
+                        soundReceive.putExtra(TransferKeys.KEY, StringeeSound.SOUND_KEY);
                         if (signalingState == StringeeCall.SignalingState.CALLING) {
+                            soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.OUTGOING_RING);
+                            sendBroadcast(soundReceive);
                             tvState.setText("Outgoing call");
                         } else if (signalingState == StringeeCall.SignalingState.RINGING) {
+                            soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.OUTGOING_RING);
+                            sendBroadcast(soundReceive);
+//
+                            soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.RING);
+                            sendBroadcast(soundReceive);
                             tvState.setText("Ringing");
                         } else if (signalingState == StringeeCall.SignalingState.ANSWERED) {
+                            soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.RING);
+                            sendBroadcast(soundReceive);
                             tvState.setText("Starting");
                             if (mMediaState == StringeeCall.MediaState.CONNECTED) {
                                 tvState.setText("Started");
                             }
                         } else if (signalingState == StringeeCall.SignalingState.BUSY) {
+                            soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.BUSY);
+                            sendBroadcast(soundReceive);
                             tvState.setText("Busy");
                             mStringeeCall.hangup();
                             finish();
                         } else if (signalingState == StringeeCall.SignalingState.ENDED) {
+                            soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.END);
+                            sendBroadcast(soundReceive);
                             tvState.setText("Ended");
                             mStringeeCall.hangup();
                             finish();
@@ -202,7 +219,7 @@ public class OutgoingCallActivity extends AppCompatActivity implements View.OnCl
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Utils.reportMessage(OutgoingCallActivity.this, "Fails to make call. a");
+                        LogStringee.toastAnywhere("Fails to make call.");
                     }
                 });
             }
@@ -316,9 +333,9 @@ public class OutgoingCallActivity extends AppCompatActivity implements View.OnCl
                                 try {
                                     accept = jsonObject.getBoolean("accept");
                                     if (accept) {
-                                        Utils.reportMessage(OutgoingCallActivity.this, "Your camera request is accepted.");
+                                        LogStringee.toastAnywhere("Your camera request is accepted.");
                                     } else {
-                                        Utils.reportMessage(OutgoingCallActivity.this, "Your camera request is rejected.");
+                                        LogStringee.toastAnywhere("Your camera request is rejected.");
                                     }
                                 } catch (JSONException e) {
                                     e.printStackTrace();
@@ -363,6 +380,11 @@ public class OutgoingCallActivity extends AppCompatActivity implements View.OnCl
                 break;
             case R.id.btn_end:
                 mStringeeCall.hangup();
+                Intent soundReceive = new Intent("service.Broadcast");
+                soundReceive.putExtra(TransferKeys.KEY, StringeeSound.SOUND_KEY);
+                soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.END);
+                sendBroadcast(soundReceive);
+                tvState.setText("Ended");
                 finish();
                 break;
             case R.id.btn_video:

@@ -2,6 +2,7 @@ package com.android.servicesample.stringee.activity;
 
 import android.Manifest;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,8 +19,10 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.android.servicesample.R;
+import com.android.servicesample.stringee.define.StringeeSound;
+import com.android.servicesample.stringee.define.TransferKeys;
+import com.android.servicesample.stringee.log.LogStringee;
 import com.android.servicesample.stringee.service.StringeeService;
-import com.android.servicesample.stringee.utils.Utils;
 import com.stringee.call.StringeeCall;
 
 import org.json.JSONException;
@@ -134,6 +137,10 @@ public class IncomingCallActivity extends AppCompatActivity implements View.OnCl
         }
 
         initAnswer();
+        Intent soundReceive = new Intent("service.Broadcast");
+        soundReceive.putExtra(TransferKeys.KEY, StringeeSound.SOUND_KEY);
+        soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.INCOMMING_RING);
+        sendBroadcast(soundReceive);
     }
 
     @Override
@@ -185,6 +192,10 @@ public class IncomingCallActivity extends AppCompatActivity implements View.OnCl
                                 tvState.setText("Started");
                             }
                         } else if (signalingState == StringeeCall.SignalingState.ENDED) {
+                            Intent soundReceive = new Intent("service.Broadcast");
+                            soundReceive.putExtra(TransferKeys.KEY, StringeeSound.SOUND_KEY);
+                            soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.OFF);
+                            sendBroadcast(soundReceive);
                             tvState.setText("Ended");
                             if (mStringeeCall != null) {
                                 mStringeeCall.hangup();
@@ -200,7 +211,7 @@ public class IncomingCallActivity extends AppCompatActivity implements View.OnCl
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Utils.reportMessage(IncomingCallActivity.this, "Fails to make call.");
+                        LogStringee.toastAnywhere("Fails to make call.");
                     }
                 });
             }
@@ -211,7 +222,7 @@ public class IncomingCallActivity extends AppCompatActivity implements View.OnCl
                     @Override
                     public void run() {
                         if (signalingState == StringeeCall.SignalingState.ANSWERED || signalingState == StringeeCall.SignalingState.BUSY) {
-                            Utils.reportMessage(IncomingCallActivity.this, "This call is handled on another device.");
+                            LogStringee.toastAnywhere("This call is handled on another device.");
                             finish();
                         }
                     }
@@ -322,9 +333,9 @@ public class IncomingCallActivity extends AppCompatActivity implements View.OnCl
                                 try {
                                     accept = jsonObject.getBoolean("accept");
                                     if (accept) {
-                                        Utils.reportMessage(IncomingCallActivity.this, "Your camera request is accepted.");
+                                        LogStringee.toastAnywhere("Your camera request is accepted.");
                                     } else {
-                                        Utils.reportMessage(IncomingCallActivity.this, "Your camera request is rejected.");
+                                        LogStringee.toastAnywhere("Your camera request is rejected.");
                                     }
                                 } catch (JSONException e) {
                                     e.printStackTrace();
@@ -344,6 +355,8 @@ public class IncomingCallActivity extends AppCompatActivity implements View.OnCl
 
     @Override
     public void onClick(View view) {
+        Intent soundReceive = new Intent("service.Broadcast");
+        soundReceive.putExtra(TransferKeys.KEY, StringeeSound.SOUND_KEY);
         switch (view.getId()) {
             case R.id.btn_mute:
                 isMute = !isMute;
@@ -368,6 +381,8 @@ public class IncomingCallActivity extends AppCompatActivity implements View.OnCl
                 }
                 break;
             case R.id.btn_answer:
+                soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.OFF);
+                sendBroadcast(soundReceive);
                 vControl.setVisibility(View.VISIBLE);
                 if (mStringeeCall != null) {
                     btnAnswer.setVisibility(View.GONE);
@@ -379,6 +394,8 @@ public class IncomingCallActivity extends AppCompatActivity implements View.OnCl
                 break;
             case R.id.btn_end:
                 if (mStringeeCall != null) {
+                    soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.END);
+                    sendBroadcast(soundReceive);
                     mStringeeCall.hangup();
                 }
                 finish();

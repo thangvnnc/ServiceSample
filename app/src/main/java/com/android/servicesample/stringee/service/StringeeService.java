@@ -8,19 +8,21 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.IBinder;
-import android.provider.Settings;
-import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
+import com.android.servicesample.App;
 import com.android.servicesample.MainActivity;
 import com.android.servicesample.R;
 import com.android.servicesample.stringee.activity.IncomingCallActivity;
 import com.android.servicesample.stringee.common.StringeeToken;
 import com.android.servicesample.stringee.define.StringeeKeys;
+import com.android.servicesample.stringee.define.StringeeSound;
+import com.android.servicesample.stringee.define.TransferKeys;
 import com.android.servicesample.stringee.log.LogStringee;
 import com.android.servicesample.stringee.receive.TransferServiceReceiver;
 import com.stringee.StringeeClient;
@@ -76,39 +78,35 @@ public class StringeeService extends Service implements StringeeConnectionListen
         @Override
         public void onReceive(Context context, Intent intent) {
             LogStringee.error(TAG, "received");
-            StringeeService stringeeService = StringeeService.getInstance();
-            if (stringeeService.isNull()) {
-                LogStringee.error(TAG, "ServiceSample is null");
-                return;
+            String key = intent.getStringExtra(TransferKeys.KEY);
+            if (StringeeSound.SOUND_KEY.equals(key)) {
+                String soundKey = intent.getStringExtra(StringeeSound.SOUND_KEY);
+                soundControl(soundKey);
             }
-
-            // Call process service
-            stringeeService.process();
+//            StringeeService stringeeService = StringeeService.getInstance();
+//            if (stringeeService.isNull()) {
+//                LogStringee.error(TAG, "ServiceSample is null");
+//                return;
+//            }
         }
     };
 
     // Non static
     private final static String TAG = "StringeeService";
-    private MediaPlayer mediaPlayer = null;
     private String userTokenId = null;
+    private Map<String, MediaPlayer> soundMap = new HashMap<>();
     public StringeeClient stringeeClient = null;
     public Map<String, StringeeCall> callsMap = new HashMap<>();
+
 
 
     @Override
     public void onCreate() {
         super.onCreate();
         instance = this;
+        initRingStone();
         IntentFilter intentFilterTransfer = new IntentFilter("service.Broadcast");
         registerReceiver(transferServiceReceiver, intentFilterTransfer);
-    }
-
-    public void process() {
-        startRing();
-        LogStringee.error(TAG, "processing...");
-//        Intent intent = new Intent();
-//        intent.setAction("main.Broadcast");
-//        sendBroadcast(intent);
     }
 
     @Override
@@ -118,7 +116,6 @@ public class StringeeService extends Service implements StringeeConnectionListen
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        initRingStone();
         initStringee();
         LogStringee.error(TAG, "onStartCommand");
         String userId = loadUserId(this);
@@ -147,6 +144,7 @@ public class StringeeService extends Service implements StringeeConnectionListen
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
+        refreshToken();
         LogStringee.error(TAG, "onTaskRemoved");
     }
 
@@ -170,11 +168,13 @@ public class StringeeService extends Service implements StringeeConnectionListen
     public void onConnectionConnected(StringeeClient stringeeClient, boolean b) {
         saveUserId(this, stringeeClient.getUserId());
         LogStringee.error(TAG, "onConnectionConnected");
+        LogStringee.toastAnywhere("connected");
     }
 
     @Override
     public void onConnectionDisconnected(StringeeClient stringeeClient, boolean b) {
         LogStringee.error(TAG, "onConnectionDisconnected");
+        refreshToken();
     }
 
     @Override
@@ -203,16 +203,67 @@ public class StringeeService extends Service implements StringeeConnectionListen
     }
 
     private void initRingStone() {
-        mediaPlayer = MediaPlayer.create(this, Settings.System.DEFAULT_RINGTONE_URI);
-        mediaPlayer.setLooping(true);
+        MediaPlayer outgoingRing = MediaPlayer.create(this, R.raw.sound_outgoing);
+        outgoingRing.setLooping(true);
+        soundMap.put(StringeeSound.OUTGOING_RING, outgoingRing);
+
+        MediaPlayer ring = MediaPlayer.create(this, R.raw.sound_ring);
+        ring.setLooping(true);
+        soundMap.put(StringeeSound.RING, ring);
+
+        MediaPlayer incommingRing = MediaPlayer.create(this, R.raw.sound_incomming);
+        incommingRing.setLooping(true);
+        soundMap.put(StringeeSound.INCOMMING_RING, incommingRing);
+
+        MediaPlayer busy = MediaPlayer.create(this, R.raw.sound_busy);
+        busy.setLooping(false);
+        soundMap.put(StringeeSound.BUSY, busy);
+
+        MediaPlayer end = MediaPlayer.create(this, R.raw.sound_hangup);
+        end.setLooping(false);
+        soundMap.put(StringeeSound.END, end);
     }
 
-    private void startRing() {
-        mediaPlayer.start();
+    private void soundControl(String key) {
+        stopSound();
+        if (!StringeeSound.OFF.equals(key)) {
+            AudioManager mAudioManager = (AudioManager) App.getInstance().getSystemService(Context.AUDIO_SERVICE);
+            if (StringeeSound.INCOMMING_RING.equals(key)) {
+                mAudioManager.setMode(AudioManager.MODE_RINGTONE);
+                mAudioManager.setSpeakerphoneOn(true);
+            }
+            else {
+                mAudioManager.setMode(AudioManager.MODE_IN_CALL);
+                mAudioManager.setSpeakerphoneOn(false);
+            }
+            soundMap.get(key).start();
+        }
     }
 
-    private void stopRing() {
-        mediaPlayer.stop();
+    private void stopSound() {
+        if(soundMap.get(StringeeSound.OUTGOING_RING).isPlaying()) {
+            soundMap.get(StringeeSound.OUTGOING_RING).stop();
+            soundMap.get(StringeeSound.OUTGOING_RING).prepareAsync();
+        }
+        if(soundMap.get(StringeeSound.RING).isPlaying()) {
+            soundMap.get(StringeeSound.RING).stop();
+            soundMap.get(StringeeSound.RING).prepareAsync();
+        }
+        if(soundMap.get(StringeeSound.INCOMMING_RING).isPlaying()) {
+            soundMap.get(StringeeSound.INCOMMING_RING).stop();
+            soundMap.get(StringeeSound.INCOMMING_RING).prepareAsync();
+        }
+        if(soundMap.get(StringeeSound.BUSY).isPlaying()) {
+            soundMap.get(StringeeSound.BUSY).stop();
+            soundMap.get(StringeeSound.BUSY).prepareAsync();
+        }
+        if(soundMap.get(StringeeSound.END).isPlaying()) {
+            soundMap.get(StringeeSound.END).stop();
+            soundMap.get(StringeeSound.END).prepareAsync();
+        }
+        AudioManager mAudioManager = (AudioManager) App.getInstance().getSystemService(Context.AUDIO_SERVICE);
+        mAudioManager.setMode(AudioManager.MODE_IN_CALL);
+        mAudioManager.setSpeakerphoneOn(false);
     }
 
     private void initStringee() {

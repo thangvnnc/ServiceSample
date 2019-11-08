@@ -33,7 +33,6 @@ dependencies {
 
     // Lib add
     implementation 'com.google.firebase:firebase-messaging:11.8.0'
-    implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.stringee.sdk.android:stringee-android-sdk:1.3.9'
     api 'io.jsonwebtoken:jjwt-api:0.10.7'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.10.7'
