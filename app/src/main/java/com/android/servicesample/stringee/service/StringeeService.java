@@ -2,6 +2,7 @@ package com.android.servicesample.stringee.service;
 
 import android.app.ActivityManager;
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -40,6 +41,9 @@ public class StringeeService extends Service implements StringeeConnectionListen
     // Static
     private static StringeeService instance = null;
     public static StringeeService getInstance() {
+        if (instance == null) {
+            instance = new StringeeService();
+        }
         return instance;
     }
 
@@ -81,24 +85,19 @@ public class StringeeService extends Service implements StringeeConnectionListen
             String key = intent.getStringExtra(TransferKeys.KEY);
             if (StringeeSound.SOUND_KEY.equals(key)) {
                 String soundKey = intent.getStringExtra(StringeeSound.SOUND_KEY);
-                soundControl(soundKey);
+                playSound(soundKey);
             }
-//            StringeeService stringeeService = StringeeService.getInstance();
-//            if (stringeeService.isNull()) {
-//                LogStringee.error(TAG, "ServiceSample is null");
-//                return;
-//            }
         }
     };
 
-    // Non static
     private final static String TAG = "StringeeService";
-    private String userTokenId = null;
+
+    // Non static
     private Map<String, MediaPlayer> soundMap = new HashMap<>();
     public StringeeClient stringeeClient = null;
     public Map<String, StringeeCall> callsMap = new HashMap<>();
-
-
+    private NotificationCompat.Builder notificationBuilder = null;
+    private int notifyId = 1;
 
     @Override
     public void onCreate() {
@@ -117,34 +116,16 @@ public class StringeeService extends Service implements StringeeConnectionListen
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         initStringee();
+        initNotifyKeepServiceRunning(intent);
+        reconnect();
         LogStringee.error(TAG, "onStartCommand");
-        String userId = loadUserId(this);
-        if (userId != null && "".equals(userId) == false) {
-            userTokenId = userId;
-            refreshToken();
-        }
-        if (userTokenId != null) {
-            refreshToken();
-        }
-
-        String input = intent.getStringExtra("inpuExtra");
-        String chanelId = "1234";
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-        Notification notification = new NotificationCompat.Builder(this, chanelId)
-                .setContentTitle("StringeeService")
-                .setContentText(input)
-                .setSmallIcon(R.drawable.ic_android_black_24dp)
-                .setContentIntent(pendingIntent)
-                .build();
-        startForeground(1, notification);
-        return START_NOT_STICKY;
+        return START_STICKY;
     }
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
-        refreshToken();
+        reconnect();
         LogStringee.error(TAG, "onTaskRemoved");
     }
 
@@ -168,13 +149,14 @@ public class StringeeService extends Service implements StringeeConnectionListen
     public void onConnectionConnected(StringeeClient stringeeClient, boolean b) {
         saveUserId(this, stringeeClient.getUserId());
         LogStringee.error(TAG, "onConnectionConnected");
-        LogStringee.toastAnywhere("connected");
+        updateNotification("Connected");
+        LogStringee.toastAnywhere("Connected");
     }
 
     @Override
     public void onConnectionDisconnected(StringeeClient stringeeClient, boolean b) {
         LogStringee.error(TAG, "onConnectionDisconnected");
-        refreshToken();
+        updateNotification("Disconnected");
     }
 
     @Override
@@ -194,7 +176,7 @@ public class StringeeService extends Service implements StringeeConnectionListen
     @Override
     public void onRequestNewToken(StringeeClient stringeeClient) {
         LogStringee.error(TAG, "onRequestNewToken");
-        refreshToken();
+        reconnect();
     }
 
     @Override
@@ -224,7 +206,7 @@ public class StringeeService extends Service implements StringeeConnectionListen
         soundMap.put(StringeeSound.END, end);
     }
 
-    private void soundControl(String key) {
+    private void playSound(String key) {
         stopSound();
         if (!StringeeSound.OFF.equals(key)) {
             AudioManager mAudioManager = (AudioManager) App.getInstance().getSystemService(Context.AUDIO_SERVICE);
@@ -237,6 +219,9 @@ public class StringeeService extends Service implements StringeeConnectionListen
                 mAudioManager.setSpeakerphoneOn(false);
             }
             soundMap.get(key).start();
+        }
+        else {
+            LogStringee.error(TAG, "OFF sound");
         }
     }
 
@@ -266,28 +251,59 @@ public class StringeeService extends Service implements StringeeConnectionListen
         mAudioManager.setSpeakerphoneOn(false);
     }
 
+    private void initNotifyKeepServiceRunning(Intent intent) {
+        String input = intent.getStringExtra("inputExtra");
+        String chanelId = "chanelId";
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        notificationBuilder = new NotificationCompat.Builder(this, chanelId)
+                .setContentTitle("ServiceStringee")
+                .setContentText(input)
+                .setSmallIcon(R.drawable.ic_android_black_24dp)
+                .setContentIntent(pendingIntent);
+        Notification notification = notificationBuilder.build();
+        startForeground(notifyId, notification);
+    }
+
+    private void updateNotification(String str) {
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationBuilder.setContentText(str);
+        mNotificationManager.notify(notifyId, notificationBuilder.build());
+    }
+
     private void initStringee() {
         stringeeClient = new StringeeClient(this);
         stringeeClient.setConnectionListener(this);
     }
 
-    private void refreshToken() {
-        if (userTokenId != null) {
+    public void reconnect() {
+        LogStringee.error(TAG, "Reconnect");
+        String userTokenId = loadUserId(App.getInstance());
+        if (userTokenId != null && "".equals(userTokenId) == false) {
             String token = StringeeToken.create(userTokenId);
-            stringeeClient.connect(token);
+            if (!stringeeClient.isConnected()) {
+                stringeeClient.connect(token);
+            }
+            else {
+                LogStringee.error(TAG, "Already connected ");
+            }
         }
     }
 
 
     public void connect(String userId) {
-        userTokenId = userId;
-        refreshToken();
+        saveUserId(App.getInstance(), userId);
+        reconnect();
     }
 
     public void disconnect() {
         if (stringeeClient != null) {
             StringeeService.getInstance().rẹmoveUserId(this);
             stringeeClient.disconnect();
+        }
+        else {
+            LogStringee.error(TAG, "Disconnect is null strineeClient ");
         }
     }
 

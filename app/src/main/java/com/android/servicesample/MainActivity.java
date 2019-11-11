@@ -49,8 +49,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btn1).setOnClickListener(this);
         findViewById(R.id.btn2).setOnClickListener(this);
         findViewById(R.id.btn3).setOnClickListener(this);
+        findViewById(R.id.btn4).setOnClickListener(this);
         edtTo = findViewById(R.id.edtTo);
         edtUserId = findViewById(R.id.edtUserId);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        StringeeClient client = StringeeService.getInstance().stringeeClient;
+        if (client != null) {
+            edtUserId.setText(client.getUserId());
+        }
     }
 
     @Override
@@ -61,6 +71,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View view) {
+        StringeeClient client = StringeeService.getInstance().stringeeClient;
         switch (view.getId()) {
             case R.id.btn1:
                 if (StringeeService.isRunning(this)) {
@@ -74,12 +85,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.btn3:
-                StringeeClient client = StringeeService.getInstance().stringeeClient;
                 if (client.isConnected()) {
                     Intent intent = new Intent(MainActivity.this, OutgoingCallActivity.class);
                     intent.putExtra("from", client.getUserId());
                     intent.putExtra("to", edtTo.getText().toString());
                     intent.putExtra("is_video_call", false);
+                    startActivity(intent);
+                }
+                break;
+
+            case R.id.btn4:
+                if (client.isConnected()) {
+                    Intent intent = new Intent(MainActivity.this, OutgoingCallActivity.class);
+                    intent.putExtra("from", client.getUserId());
+                    intent.putExtra("to", edtTo.getText().toString());
+                    intent.putExtra("is_video_call", true);
                     startActivity(intent);
                 }
                 break;

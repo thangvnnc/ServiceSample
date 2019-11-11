@@ -180,18 +180,15 @@ public class OutgoingCallActivity extends AppCompatActivity implements View.OnCl
                         Intent soundReceive = new Intent("service.Broadcast");
                         soundReceive.putExtra(TransferKeys.KEY, StringeeSound.SOUND_KEY);
                         if (signalingState == StringeeCall.SignalingState.CALLING) {
-                            soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.OUTGOING_RING);
-                            sendBroadcast(soundReceive);
+//                            soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.OUTGOING_RING);
+//                            sendBroadcast(soundReceive);
                             tvState.setText("Outgoing call");
-                        } else if (signalingState == StringeeCall.SignalingState.RINGING) {
-                            soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.OUTGOING_RING);
-                            sendBroadcast(soundReceive);
-//
+                        } else if (signalingState == StringeeCall.SignalingState.RINGING) {//
                             soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.RING);
                             sendBroadcast(soundReceive);
                             tvState.setText("Ringing");
                         } else if (signalingState == StringeeCall.SignalingState.ANSWERED) {
-                            soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.RING);
+                            soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.OFF);
                             sendBroadcast(soundReceive);
                             tvState.setText("Starting");
                             if (mMediaState == StringeeCall.MediaState.CONNECTED) {
@@ -209,6 +206,10 @@ public class OutgoingCallActivity extends AppCompatActivity implements View.OnCl
                             tvState.setText("Ended");
                             mStringeeCall.hangup();
                             finish();
+                        }
+                        else {
+                            soundReceive.putExtra(StringeeSound.SOUND_KEY, StringeeSound.OFF);
+                            sendBroadcast(soundReceive);
                         }
                     }
                 });
