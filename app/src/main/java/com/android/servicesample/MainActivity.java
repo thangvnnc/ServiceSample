@@ -52,6 +52,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btn4).setOnClickListener(this);
         edtTo = findViewById(R.id.edtTo);
         edtUserId = findViewById(R.id.edtUserId);
+        StringeeClient client = StringeeService.getInstance().stringeeClient;
+        if (client != null) {
+            edtUserId.setText(client.getUserId());
+        }
     }
 
     @Override
