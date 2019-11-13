@@ -26,9 +26,11 @@ import com.android.servicesample.stringee.define.StringeeSound;
 import com.android.servicesample.stringee.define.TransferKeys;
 import com.android.servicesample.stringee.log.LogStringee;
 import com.android.servicesample.stringee.receive.TransferServiceReceiver;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.stringee.StringeeClient;
 import com.stringee.call.StringeeCall;
 import com.stringee.exception.StringeeError;
+import com.stringee.listener.StatusListener;
 import com.stringee.listener.StringeeConnectionListener;
 
 import org.json.JSONObject;
@@ -116,7 +118,7 @@ public class StringeeService extends Service implements StringeeConnectionListen
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         initStringee();
-        initNotifyKeepServiceRunning(intent);
+//        initNotifyKeepServiceRunning(intent);
         reconnect();
         LogStringee.error(TAG, "onStartCommand");
         return START_STICKY;
@@ -148,15 +150,17 @@ public class StringeeService extends Service implements StringeeConnectionListen
     @Override
     public void onConnectionConnected(StringeeClient stringeeClient, boolean b) {
         saveUserId(this, stringeeClient.getUserId());
+        registerNotify();
         LogStringee.error(TAG, "onConnectionConnected");
-        updateNotification("Connected");
+//        updateNotification("Connected");
         LogStringee.toastAnywhere("Connected");
     }
 
     @Override
     public void onConnectionDisconnected(StringeeClient stringeeClient, boolean b) {
         LogStringee.error(TAG, "onConnectionDisconnected");
-        updateNotification("Disconnected");
+//        updateNotification("Disconnected");
+        unregisterNotify();
     }
 
     @Override
@@ -211,7 +215,7 @@ public class StringeeService extends Service implements StringeeConnectionListen
         if (!StringeeSound.OFF.equals(key)) {
             AudioManager mAudioManager = (AudioManager) App.getInstance().getSystemService(Context.AUDIO_SERVICE);
             if (StringeeSound.INCOMMING_RING.equals(key)) {
-                mAudioManager.setMode(AudioManager.MODE_RINGTONE);
+                mAudioManager.setMode(AudioManager.MODE_CURRENT);
                 mAudioManager.setSpeakerphoneOn(true);
             }
             else {
@@ -275,6 +279,50 @@ public class StringeeService extends Service implements StringeeConnectionListen
     private void initStringee() {
         stringeeClient = new StringeeClient(this);
         stringeeClient.setConnectionListener(this);
+    }
+
+    private void registerNotify() {
+        // Get updated InstanceID token.
+        String refreshedToken = FirebaseInstanceId.getInstance().getToken();
+
+        StringeeClient client = StringeeService.getInstance().stringeeClient;
+        // Register the token to Stringee Server
+        if (client != null && client.isConnected()) {
+            client.registerPushToken(refreshedToken, new StatusListener() {
+                @Override
+                public void onSuccess() {
+                    LogStringee.error(TAG, "registerPushToken success");
+                }
+
+                @Override
+                public void onError(StringeeError stringeeError) {
+                    super.onError(stringeeError);
+                    LogStringee.error(TAG, "registerPushToken error: " + stringeeError.getMessage());
+                }
+            });
+        }
+    }
+
+    private void unregisterNotify() {
+        // Get updated InstanceID token.
+        String refreshedToken = FirebaseInstanceId.getInstance().getToken();
+
+        StringeeClient client = StringeeService.getInstance().stringeeClient;
+        // Register the token to Stringee Server
+        if (client != null && client.isConnected()) {
+            client.unregisterPushToken(refreshedToken, new StatusListener() {
+                @Override
+                public void onSuccess() {
+                    LogStringee.error(TAG, "unregisterPushToken success");
+                }
+
+                @Override
+                public void onError(StringeeError stringeeError) {
+                    super.onError(stringeeError);
+                    LogStringee.error(TAG, "unregisterPushToken error: " + stringeeError.getMessage());
+                }
+            });
+        }
     }
 
     public void reconnect() {

@@ -1,5 +1,8 @@
 package com.android.servicesample.stringee.notify;
 
+import android.content.Intent;
+
+import com.android.servicesample.MainActivity;
 import com.android.servicesample.stringee.log.LogStringee;
 import com.android.servicesample.stringee.service.StringeeService;
 import com.google.firebase.messaging.FirebaseMessagingService;
@@ -24,7 +27,7 @@ public class PushNotifyMesssageStringee extends FirebaseMessagingService {
             String pushFromStringee = remoteMessage.getData().get("stringeePushNotification");
             if (pushFromStringee != null) {
                 if (client == null) { // Check whether the app is not alive
-//                    startActivity(new Intent(this, MainActivity.class));
+                    startActivity(new Intent(this, MainActivity.class));
                 }
             }
         }
