@@ -216,8 +216,11 @@ public class StringeeService extends Service implements StringeeConnectionListen
         if (!StringeeSound.OFF.equals(key)) {
             AudioManager mAudioManager = (AudioManager) App.getInstance().getSystemService(Context.AUDIO_SERVICE);
             if (StringeeSound.INCOMMING_RING.equals(key)) {
-                mAudioManager.setMode(AudioManager.MODE_CURRENT);
+                mAudioManager.setMode(AudioManager.STREAM_NOTIFICATION);
                 mAudioManager.setSpeakerphoneOn(true);
+                mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC,
+                        mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC),
+                        0);
             }
             else {
                 mAudioManager.setMode(AudioManager.MODE_IN_CALL);
@@ -251,9 +254,6 @@ public class StringeeService extends Service implements StringeeConnectionListen
             soundMap.get(StringeeSound.END).stop();
             soundMap.get(StringeeSound.END).prepareAsync();
         }
-        AudioManager mAudioManager = (AudioManager) App.getInstance().getSystemService(Context.AUDIO_SERVICE);
-        mAudioManager.setMode(AudioManager.MODE_IN_CALL);
-        mAudioManager.setSpeakerphoneOn(false);
     }
 
     private void initNotifyKeepServiceRunning(Intent intent) {
@@ -264,17 +264,6 @@ public class StringeeService extends Service implements StringeeConnectionListen
             Notification notification = notificationBuilder.build();
             startForeground(notifyId, notification);
         }
-//        String input = intent.getStringExtra("inputExtra");
-//        String chanelId = "chanelKeepService";
-//        Intent notificationIntent = new Intent(this, MainActivity.class);
-//        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-//        notificationBuilder = new NotificationCompat.Builder(this, chanelId);
-//                .setContentTitle("ServiceStringee")
-//                .setContentText(input)
-//                .setSmallIcon(R.drawable.ic_android_black_24dp)
-//                .setContentIntent(pendingIntent);
-//        Notification notification = notificationBuilder.build();
-//        startForeground(notifyId, notification);
     }
 
     private void initNotifyService(Intent intent) {
