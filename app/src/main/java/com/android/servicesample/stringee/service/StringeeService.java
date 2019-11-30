@@ -153,15 +153,15 @@ public class StringeeService extends Service implements StringeeConnectionListen
         saveUserId(this, stringeeClient.getUserId());
         registerNotify();
         LogStringee.error(TAG, "onConnectionConnected");
-//        updateNotification("Connected");
+        updateNotification("Connected");
         LogStringee.toastAnywhere("Connected");
     }
 
     @Override
     public void onConnectionDisconnected(StringeeClient stringeeClient, boolean b) {
         LogStringee.error(TAG, "onConnectionDisconnected");
-//        updateNotification("Disconnected");
-//        unregisterNotify();
+        updateNotification("Disconnected");
+        unregisterNotify();
     }
 
     @Override
@@ -257,13 +257,25 @@ public class StringeeService extends Service implements StringeeConnectionListen
     }
 
     private void initNotifyKeepServiceRunning(Intent intent) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            LogStringee.error(TAG, "initNotifyKeepServiceRunning");
-            String chanelId = "chanelKeepService";
-            notificationBuilder = new NotificationCompat.Builder(this, chanelId);
-            Notification notification = notificationBuilder.build();
-            startForeground(notifyId, notification);
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            LogStringee.error(TAG, "initNotifyKeepServiceRunning");
+//            String chanelId = "chanelKeepService";
+//            notificationBuilder = new NotificationCompat.Builder(this, chanelId);
+//            Notification notification = notificationBuilder.build();
+//            startForeground(notifyId, notification);
+//        }
+
+        String input = intent.getStringExtra("inputExtra");
+        String chanelId = "chanelIdNotify";
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        notificationBuilder = new NotificationCompat.Builder(this, chanelId)
+                .setContentTitle("ServiceStringee")
+                .setContentText(input)
+                .setSmallIcon(R.drawable.ic_android_black_24dp)
+                .setContentIntent(pendingIntent);
+        Notification notification = notificationBuilder.build();
+        startForeground(notifyId, notification);
     }
 
     private void initNotifyService(Intent intent) {
